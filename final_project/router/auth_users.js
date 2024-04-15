@@ -57,27 +57,55 @@ if (authenticatedUser(username,password)) {
 regd_users.put("/auth/review/:isbn", (req, res) => {
   //Write your code here
   const isbn = req.params.isbn;
-  const userName = req.session.authorization.userName;
-  const newReview = req.query.review;
+  const userName = req.session.authorization.username;
+  const newReview = req.body.review;
 
   let bookReviews = books[isbn].reviews;
+  console.log(bookReviews);
 
-  Object.keys(bookReviews).forEach((key) =>{
-    const tempReview = bookReviews[key];
-    if (!tempReview){
-      bookReviews = {"userName": userName, "review": newReview};
+  if (bookReviews={}){
+    bookReviews = {"userName": userName, "review": newReview};
+    console.log(bookReviews);
+    res.send("Review was added!" + ` User: ${userName} Review: ${newReview}`);
+    return;
+  }
+    Object.keys(bookReviews).forEach((key) =>{
+        let tempReview = bookReviews[key];
+        console.log(tempReview);
+        if (tempReview.userName === userName){
+            bookReviews[key] = {"review": newReview};
+            res.send("Review was updated");
+            return;
     }
-    else if (tempReview.userName === userName){
-      bookReviews[key] = {"review": newReview};
+        else if(!tempReview.userName === userName){
+            bookReviews = {...bookReviews, ...newReview};
+            res.send("Review was added!");
+            return;
     }
-    else{
-      bookReviews = {...bookReviews, ...newReview};
-    }
-
-  })
-
+});
 
 });
+
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    const isbn = req.params.isbn;
+    const userName = req.session.authorization.username;
+
+    let bookReviews = books[isbn].reviews;
+
+    Object.keys(bookReviews).forEach((key)=>{
+        if (bookReviews[key] === userName){
+            delete bookReviews[key];
+            return res.send("Review has been deleted");
+        }
+
+    });
+
+    return res.send("Review was not found");
+
+});
+    
+
+    
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
